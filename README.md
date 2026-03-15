@@ -40,7 +40,7 @@ Bifrost operates as a stateless security intermediary. It intercepts every incom
 ### Build and Run
 ```
 # Clone the repository
-git clone [https://github.com/mecik-arda/bifrost-gateway.git](https://github.com/mecik-arda/bifrost-gateway.git)
+git clone https://github.com/mecik-arda/bifrost-gateway.git
 
 # Compile and package
 mvn clean install
