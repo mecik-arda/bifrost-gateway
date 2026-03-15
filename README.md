@@ -1,118 +1,80 @@
-\# Bifrost Security Gateway
-
-
+# Bifrost Security Gateway
 
 Bifrost is a high-performance, cybersecurity-focused API Gateway built with Spring Boot. Inspired by the mythical bridge connecting Midgard to Asgard, this gateway serves as a resilient guardian for microservices architecture, intercepting and neutralizing malicious traffic before it reaches core systems.
 
+## Security Architecture
 
+Bifrost operates as a stateless security intermediary. It intercepts every incoming HTTP request and passes it through a chain of security filters (The Five Runes) before routing it to the destination service.
 
-\## Security Features (The Five Runes)
+### The Security Filter Chain (The Five Runes)
 
+1. **Mjolnir (Web Application Firewall):** - Uses RegEx-based pattern matching to identify common injection attacks.
+   - Detects SQL Injection (SQLi) patterns such as `UNION SELECT`, `OR 1=1`, and `DROP TABLE`.
+   - Neutralizes Cross-Site Scripting (XSS) attempts by filtering `<script>` tags and JavaScript event handlers.
 
+2. **Heimdall (Brute Force Detection):** - Monitors authentication failure rates per IP address.
+   - Implements a temporary lockout mechanism for IPs exceeding the threshold of failed JWT validation attempts.
 
-1\. Mjolnir (WAF): A robust Web Application Firewall filter designed to detect and block SQL Injection and Cross-Site Scripting (XSS) attacks at the entry point.
+3. **Runestone (Correlation & Traceability):** - Injects a `X-Bifrost-Request-ID` (UUID) into every request header.
+   - Enables distributed tracing across microservices, making it easier to track the lifecycle of a request in logs.
 
-2\. Heimdall (Brute Force Detection): An intelligent monitoring system that tracks suspicious login patterns and failed requests to mitigate automated attacks.
+4. **Valkyrie (Proactive Monitoring):** - Exposed via `/public/health` endpoint.
+   - Provides granular status reports of the gateway's internal security modules.
 
-3\. Runestone (Correlation ID): Assigns a unique UUID to every incoming request to ensure end-to-end traceability and streamlined log analysis across services.
+5. **Odin's Eye (Advanced Rate Limiting):** - Powered by the **Token Bucket Algorithm** (via Bucket4j).
+   - Prevents Resource Exhaustion and Denial of Service (DoS) attacks.
+   - Configurable throughput limits (Requests Per Second) at the global or endpoint level.
 
-4\. Valkyrie (Health Monitoring): Provides real-time status reporting for the gateway and its associated downstream services to ensure high availability.
+## Technical Specifications
 
-5\. Odin's Eye (Rate Limiter): Implements the Token Bucket algorithm via Bucket4j for per-IP request throttling and Denial of Service (DoS) mitigation.
+- **Security Model:** Stateless JWT (JSON Web Token) Authentication.
+- **Filter Precedence:** Custom filter ordering ensures that IP Blacklisting and WAF checks occur before expensive JWT validation.
+- **Logging:** Integration with Slf4j and MDC for correlated security event logging.
 
+## Installation and Execution
 
+### Prerequisites
+- Java 17 or higher
+- Maven 3.6 or higher
 
-\## Getting Started
+### Build and Run
+```
+# Clone the repository
+git clone [https://github.com/mecik-arda/bifrost-gateway.git](https://github.com/mecik-arda/bifrost-gateway.git)
 
-
-
-\### Prerequisites
-
-\* Java 17 or higher
-
-\* Maven 3.6 or higher
-
-
-
-\### Installation and Execution
-
-```bash
-
-\# Clone the repository
-
-git clone \[https://github.com/mecik-arda/bifrost-gateway.git](https://github.com/mecik-arda/bifrost-gateway.git)
-
-
-
-\# Build and install dependencies
-
+# Compile and package
 mvn clean install
 
-
-
-\# Run the application
-
+# Launch the gateway
 mvn spring-boot:run
+```
+### Configuration
 
+Custom security policies are defined in src/main/resources/application.yml:
+YAML
 
-
-Configuration
-
-
-
-Security parameters, including IP blacklists, rate-limit capacities, and JWT secret keys, can be customized within the src/main/resources/application.yml file.
+bifrost:
+  security:
+    blacklist-ips: []
+    rate-limit:
+      capacity: 10
+      refill-tokens: 1
+    jwt:
+      secret: ${JWT_SECRET:your_default_secret}
 
 Tech Stack
 
+    Spring Boot 3.x
 
+    Spring Security (Stateless)
 
-&#x20;   Spring Boot 3.x
+    Bucket4j (Rate Limiting)
 
-
-
-&#x20;   Spring Security (Stateless JWT Authentication)
-
-
-
-&#x20;   Bucket4j (Token Bucket Rate Limiting)
-
-
-
-&#x20;   Auth0 Java-JWT (Secure Token Handling)
-
-
+    Auth0 Java-JWT (Security Tokens)
 
 Author
 
-
-
-&#x20;   Arda Mecik - GitHub Profile
-
-
-
+Arda Mecik - GitHub Profile
 License
 
-
-
 This project is licensed under the MIT License - see the LICENSE file for details.
-
-
-
-
-
-\### Değişikliği GitHub'a Gönder
-
-
-
-Terminalden şu komutları çalıştırarak emojilerden arınmış sürümü yükleyebilirsin:
-
-
-
-```powershell
-
-git add README.md
-
-git commit -m "docs: remove emojis and refine README tone"
-
-git push origin main
-
