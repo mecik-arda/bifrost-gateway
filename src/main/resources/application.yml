@@ -1,0 +1,12 @@
+server:
+  port: 8080
+
+bifrost:
+  jwt:
+    secret: aVeryLongSecretKeyThatIsAtLeastThirtyTwoBytesLongForHmacSha256
+    expiration-ms: 3600000
+  security:
+    blacklist-ips:
+  rate-limit:
+    capacity: 100
+    tokens: 100
