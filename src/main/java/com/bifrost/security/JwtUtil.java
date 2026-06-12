@@ -7,6 +7,7 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.jwt.interfaces.JWTVerifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import jakarta.annotation.PostConstruct;
 
 import java.util.Date;
 
@@ -22,6 +23,13 @@ public class JwtUtil {
 
     @Value("${bifrost.jwt.expiration-ms}")
     private long expirationMs;
+
+    @PostConstruct
+    public void init() {
+        if (secret == null || secret.length() < 32) {
+            throw new IllegalStateException("JWT Secret must be at least 32 characters (256-bit) long for HMAC256 security.");
+        }
+    }
 
     public String generateToken(String username) {
         Algorithm algorithm = Algorithm.HMAC256(secret);

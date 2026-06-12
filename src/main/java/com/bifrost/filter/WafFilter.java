@@ -34,14 +34,29 @@ public class WafFilter extends OncePerRequestFilter {
                                     @NonNull HttpServletResponse response,
                                     @NonNull FilterChain filterChain)
             throws ServletException, IOException {
-        String query = request.getQueryString();
-        if (isMalicious(query)) {
+            
+        MultiReadHttpServletRequest wrappedRequest = new MultiReadHttpServletRequest(request);
+        
+        String query = wrappedRequest.getQueryString();
+        String body = wrappedRequest.getBody();
+        
+        boolean maliciousHeader = false;
+        java.util.Enumeration<String> headerNames = wrappedRequest.getHeaderNames();
+        while (headerNames != null && headerNames.hasMoreElements()) {
+            String headerName = headerNames.nextElement();
+            if (isMalicious(wrappedRequest.getHeader(headerName))) {
+                maliciousHeader = true;
+                break;
+            }
+        }
+
+        if (isMalicious(query) || isMalicious(body) || maliciousHeader) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             response.setContentType("application/json");
             response.getWriter().write("{\"error\": \"Security Violation\", \"message\": \"Malicious content detected by Mjolnir.\"}");
             return;
         }
-        filterChain.doFilter(request, response);
+        filterChain.doFilter(wrappedRequest, response);
     }
 
     private boolean isMalicious(String value) {

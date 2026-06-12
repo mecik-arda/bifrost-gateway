@@ -14,8 +14,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 
 /**
  * @author Arda Meçik
@@ -24,7 +24,10 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class RateLimitFilter extends OncePerRequestFilter {
 
-    private final Map<String, Bucket> cache = new ConcurrentHashMap<>();
+    private final Cache<String, Bucket> cache = Caffeine.newBuilder()
+            .expireAfterAccess(Duration.ofMinutes(5))
+            .maximumSize(10000)
+            .build();
 
     @Value("${bifrost.rate-limit.capacity:100}")
     private int capacity;
@@ -37,8 +40,8 @@ public class RateLimitFilter extends OncePerRequestFilter {
                                     @NonNull HttpServletResponse response, 
                                     @NonNull FilterChain filterChain)
             throws ServletException, IOException {
-        String clientIp = request.getRemoteAddr();
-        Bucket bucket = cache.computeIfAbsent(clientIp, this::createNewBucket);
+        String clientIp = getClientIp(request);
+        Bucket bucket = cache.get(clientIp, this::createNewBucket);
         if (!bucket.tryConsume(1)) {
             response.setStatus(429);
             response.setContentType("application/json");
@@ -55,5 +58,13 @@ public class RateLimitFilter extends OncePerRequestFilter {
                         .refillGreedy(tokens, Duration.ofMinutes(1))
                         .build())
                 .build();
+    }
+
+    private String getClientIp(HttpServletRequest request) {
+        String xfHeader = request.getHeader("X-Forwarded-For");
+        if (xfHeader == null || xfHeader.isEmpty()) {
+            return request.getRemoteAddr();
+        }
+        return xfHeader.split(",")[0].trim();
     }
 }
